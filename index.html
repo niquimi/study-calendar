@@ -62,7 +62,14 @@
   </style>
 </head>
 <body>
-  <h1 class="mb-4">Monthly Calendar</h1>
+  <!-- Header with Add Subject button and title -->
+  <div class="container my-4">
+    <div class="d-flex align-items-center justify-content-start">
+      <button id="add-subject-button" class="btn btn-primary me-3">Add Subject</button>
+      <h1 class="mb-0">Monthly Calendar</h1>
+    </div>
+  </div>
+
   <div class="calendar-container">
     <div class="month-nav">
       <button id="prev-month">&laquo;</button>
@@ -72,7 +79,7 @@
     <div id="calendar" class="calendar"></div>
   </div>
 
-  <!-- Card for selected day -->
+  <!-- Card for selected day (existing feature) -->
   <div id="day-card" class="card mt-4" style="display: none;">
     <div class="card-body">
       <h5 class="card-title" id="selected-day-title"></h5>
@@ -80,8 +87,32 @@
     </div>
   </div>
 
+  <!-- Bootstrap Modal for Adding Subject -->
+  <div class="modal fade" id="subjectModal" tabindex="-1" aria-labelledby="subjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="subjectForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="subjectModalLabel">Add Subject</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3 text-start">
+              <label for="subjectName" class="form-label">Subject Name</label>
+              <input type="text" class="form-control" id="subjectName" name="subjectName" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Subject</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
@@ -89,18 +120,8 @@
 
     function getMonthName(month) {
       const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
       ];
       return monthNames[month];
     }
@@ -118,22 +139,12 @@
       calendar.innerHTML = "";
 
       const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December"
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
       ];
       monthYear.textContent = `${monthNames[month]} ${year}`;
 
-      // Add weekdays header (Monday to Sunday)
+      // Weekdays header (Monday to Sunday)
       const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
       daysOfWeek.forEach(day => {
         const div = document.createElement("div");
@@ -148,7 +159,7 @@
       startDay = startDay === 0 ? 6 : startDay - 1; // Adjust for Monday start
 
       const prevMonthLastDay = new Date(year, month, 0).getDate();
-      // Fill previous month days
+      // Fill in previous month's days
       for (let i = startDay - 1; i >= 0; i--) {
         const prevDay = prevMonthLastDay - i;
         const prevCell = document.createElement("div");
@@ -163,15 +174,14 @@
         dayCell.className = "day current-month";
         dayCell.textContent = day;
 
-        // If this is today, select by default (only if viewing the current month)
+        // If today, select by default (when viewing the current month)
         if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
           dayCell.classList.add("selected");
           showDayCard(day, month, year);
         }
 
-        // Add click event listener to select day and show the card
+        // Add click event to select a day and show the card
         dayCell.addEventListener("click", function() {
-          // Remove selection from any active day
           document.querySelectorAll(".current-month.selected").forEach(cell => cell.classList.remove("selected"));
           this.classList.add("selected");
           showDayCard(day, month, year);
@@ -179,7 +189,7 @@
         calendar.appendChild(dayCell);
       }
 
-      // Fill next month days to complete the week
+      // Fill in next month's days to complete the week
       const totalCells = calendar.children.length;
       const nextDays = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
       for (let i = 1; i <= nextDays; i++) {
@@ -209,6 +219,44 @@
     });
 
     generateCalendar(currentYear, currentMonth);
+
+    // Initialize Bootstrap modal
+    const subjectModal = new bootstrap.Modal(document.getElementById('subjectModal'));
+    // Open modal when "Add Subject" button is clicked
+    document.getElementById('add-subject-button').addEventListener('click', () => {
+      subjectModal.show();
+    });
+
+    // Handle form submission for adding a subject
+    document.getElementById('subjectForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const subjectName = document.getElementById('subjectName').value.trim();
+      if (!subjectName) return;
+
+      // POST request to add the subject to the database
+      fetch('/api/subjects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name: subjectName })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Subject created:', data);
+        // Optionally: update your subjects list here
+        document.getElementById('subjectForm').reset();
+        subjectModal.hide();
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    });
   </script>
 </body>
 </html>
