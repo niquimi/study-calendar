@@ -18,6 +18,27 @@ router.get("/", (req, res) => {
   });
 });
 
+// DELETE a study session
+router.delete("/:id", async (req, res) => {
+    const { id } = req.params;
+    try {
+        db.query("DELETE FROM study_sessions WHERE id = ?", [id], (err, result) => {
+            if (err) {
+              console.error("Error deleting session:", err);
+              return res.status(500).json({ success: false, message: "Failed to delete session" });
+            }
+            if (result.affectedRows === 0) {
+              return res.status(404).json({ success: false, message: "Session not found" });
+            }
+            res.json({ success: true, message: "Session deleted successfully" });
+        });          
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      res.status(500).json({ success: false, message: "Failed to delete session" });
+    }
+});
+  
+  
 // POST a new study session
 router.post("/", (req, res) => {
   const { subject_id, session_date, start_time, duration, title, description } = req.body;
