@@ -23,6 +23,7 @@ app.use(express.static(path.join(__dirname, "./public")));
 
 // Mount the API endpoints
 app.use("/api/subjects", require("./api/subjects"));
+app.use("/api/study_sessions", require("./api/sessions"));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "./index.html"));

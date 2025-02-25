@@ -32,7 +32,6 @@
       font-weight: bold;
     }
     .weekday {
-      background: #007bff;
       color: white;
     }
     .current-month {
@@ -57,7 +56,7 @@
       cursor: pointer;
     }
     .selected {
-      border: 2px solid #ffc107;
+      border: 2px solid #07e6ff;
     }
   </style>
 </head>
@@ -70,7 +69,7 @@
     </div>
   </div>
 
-  <div class="calendar-container">
+  <div class="calendar-container card" style="padding: 20px;">
     <div class="month-nav">
       <button id="prev-month">&laquo;</button>
       <h3 id="month-year"></h3>
@@ -79,14 +78,92 @@
     <div id="calendar" class="calendar"></div>
   </div>
 
-  <!-- Card for selected day (existing feature) -->
+  <!-- Card for selected day with timetable -->
   <div id="day-card" class="card mt-4" style="display: none;">
     <div class="card-body">
       <h5 class="card-title" id="selected-day-title"></h5>
-      <p class="card-text">Timetable placeholder...</p>
+      <!-- Timetable -->
+      <h6 class="mt-3">Study Sessions</h6>
+      <ul id="timetable" class="list-group mb-3"></ul>
+      <!-- Button to open modal for adding a session -->
+      <button class="btn btn-primary" id="add-session-button">Add Study Session</button>
     </div>
   </div>
-
+  
+  <!-- Bootstrap Modal for Adding Study Session -->
+  <div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form id="sessionForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="sessionModalLabel">Add Study Session</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <!-- Subject Selection -->
+            <div class="mb-3">
+              <label for="subjectSelect" class="form-label">Subject</label>
+              <select class="form-control" id="subjectSelect" required></select>
+            </div>
+            <!-- Date Input (Pre-filled with Selected Day) -->
+            <div class="mb-3">
+              <label for="sessionDate" class="form-label">Date</label>
+              <input type="date" class="form-control" id="sessionDate" required readonly>
+            </div>
+            <!-- Session Type Selection -->
+            <div class="mb-3">
+              <label class="form-label">Session Type</label>
+              <div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="sessionType" id="startSessionOption" value="start" checked>
+                  <label class="form-check-label" for="startSessionOption">Start Session</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="sessionType" id="registerSessionOption" value="register">
+                  <label class="form-check-label" for="registerSessionOption">Register Session</label>
+                </div>
+              </div>
+            </div>
+            <!-- Start Session Fields -->
+            <div id="startSessionFields">
+              <div class="mb-3">
+                <label for="startTime" class="form-label">Start Time</label>
+                <input type="time" class="form-control" id="startTime" readonly>
+              </div>
+              <div class="mb-3">
+                <label for="sessionDuration" class="form-label">Duration (minutes)</label>
+                <input type="number" class="form-control" id="sessionDuration" min="1">
+              </div>
+            </div>
+            <!-- Register Session Fields -->
+            <div id="registerSessionFields" style="display: none;">
+              <div class="mb-3">
+                <label for="registerStartTime" class="form-label">Start Time</label>
+                <input type="time" class="form-control" id="registerStartTime">
+              </div>
+              <div class="mb-3">
+                <label for="endTime" class="form-label">Finish Time</label>
+                <input type="time" class="form-control" id="endTime">
+              </div>
+            </div>
+            <!-- Common Fields -->
+            <div class="mb-3">
+              <label for="sessionTitle" class="form-label">Title</label>
+              <input type="text" class="form-control" id="sessionTitle" required>
+            </div>
+            <div class="mb-3">
+              <label for="sessionDescription" class="form-label">Description</label>
+              <textarea class="form-control" id="sessionDescription"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Session</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  
   <!-- Bootstrap Modal for Adding Subject -->
   <div class="modal fade" id="subjectModal" tabindex="-1" aria-labelledby="subjectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -114,9 +191,159 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
+    // Declare selectedDate globally so it can be accessed and updated by all functions
+    let selectedDate = null;
+    const today = new Date();
+
+    // ----------------------------
+    // Session & Subject Modal Code
+    // ----------------------------
+    document.addEventListener("DOMContentLoaded", function () {
+      const sessionModal = new bootstrap.Modal(document.getElementById("sessionModal"));
+      const addSessionButton = document.getElementById("add-session-button");
+      const sessionForm = document.getElementById("sessionForm");
+      const subjectSelect = document.getElementById("subjectSelect");
+      const sessionDateInput = document.getElementById("sessionDate");
+      const timetable = document.getElementById("timetable");
+
+      // Toggle session type fields based on radio selection
+      const startSessionOption = document.getElementById("startSessionOption");
+      const registerSessionOption = document.getElementById("registerSessionOption");
+      const startSessionFields = document.getElementById("startSessionFields");
+      const registerSessionFields = document.getElementById("registerSessionFields");
+      startSessionOption.addEventListener("change", toggleSessionType);
+      registerSessionOption.addEventListener("change", toggleSessionType);
+
+      function toggleSessionType() {
+        if (startSessionOption.checked) {
+          startSessionFields.style.display = "";
+          registerSessionFields.style.display = "none";
+          // Set start time to current time for start session (formatted as HH:MM)
+          const now = new Date();
+          document.getElementById("startTime").value = now.toTimeString().slice(0,5);
+        } else {
+          startSessionFields.style.display = "none";
+          registerSessionFields.style.display = "";
+        }
+      }
+
+      // Show the add session modal when clicking the button
+      addSessionButton.addEventListener("click", function () {
+        if (!selectedDate) return;
+        sessionDateInput.value = selectedDate;
+
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split("T")[0];
+
+        // Get the "Start Session" inputs
+        const startTimeInput = document.getElementById("startTime");
+        const sessionDurationInput = document.getElementById("sessionDuration");
+
+        if (selectedDate === today) {
+            // Enable "Start Session" options for today
+            startTimeInput.value = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            startTimeInput.disabled = false;
+            sessionDurationInput.disabled = false;
+        } else {
+            // Disable "Start Session" options for other days
+            startTimeInput.value = "";
+            startTimeInput.disabled = true;
+            sessionDurationInput.value = "";
+            sessionDurationInput.disabled = true;
+        }
+
+        sessionModal.show();
+      });
+
+
+      // Fetch subjects and populate the dropdown
+      function loadSubjects() {
+        fetch("/api/subjects")
+          .then((res) => res.json())
+          .then((data) => {
+            subjectSelect.innerHTML = "";
+            data.forEach((subject) => {
+              const option = document.createElement("option");
+              option.value = subject.id;
+              option.textContent = subject.name;
+              subjectSelect.appendChild(option);
+            });
+          })
+          .catch((err) => console.error("Error loading subjects:", err));
+      }
+
+      // Fetch study sessions for the selected day
+      function loadTimetable(date) {
+        timetable.innerHTML = "";
+        fetch(`/api/study_sessions?date=${date}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.length === 0) {
+              timetable.innerHTML = "<li class='list-group-item text-muted'>No sessions</li>";
+              return;
+            }
+            data.forEach((session) => {
+              const li = document.createElement("li");
+              li.classList.add("list-group-item");
+              li.innerHTML = `<strong>${session.start_time} - ${session.title}</strong><br>${session.description}`;
+              timetable.appendChild(li);
+            });
+          })
+          .catch((err) => console.error("Error loading sessions:", err));
+      }
+
+      // Handle adding a new study session
+      sessionForm.addEventListener("submit", function (e) {
+        e.preventDefault();
+        const subjectId = subjectSelect.value;
+        const date = sessionDateInput.value;
+        let startTime, duration;
+        if (startSessionOption.checked) {
+          // For Start Session, use the now value and duration input
+          startTime = document.getElementById("startTime").value;
+          duration = document.getElementById("sessionDuration").value;
+        } else {
+          // For Register Session, use provided start and finish times, calculate duration
+          startTime = document.getElementById("registerStartTime").value;
+          const endTime = document.getElementById("endTime").value;
+          if (startTime && endTime) {
+            const start = new Date(`1970-01-01T${startTime}:00`);
+            const end = new Date(`1970-01-01T${endTime}:00`);
+            duration = Math.round((end - start) / (1000 * 60));
+          }
+        }
+        const title = document.getElementById("sessionTitle").value;
+        const description = document.getElementById("sessionDescription").value;
+
+        fetch("/api/study_sessions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            subject_id: subjectId,
+            session_date: date,
+            start_time: startTime,
+            duration: duration,
+            title,
+            description
+          }),
+        })
+          .then((res) => res.json())
+          .then(() => {
+            sessionModal.hide();
+            loadTimetable(selectedDate);
+          })
+          .catch((err) => console.error("Error adding session:", err));
+      });
+
+      // Load subjects on page load
+      loadSubjects();
+    });
+
+    // ----------------------------
+    // Calendar Code
+    // ----------------------------
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth();
-    const today = new Date();
 
     function getMonthName(month) {
       const monthNames = [
@@ -126,11 +353,16 @@
       return monthNames[month];
     }
 
+    // Update the day card and set the global selectedDate
     function showDayCard(day, month, year) {
       const card = document.getElementById("day-card");
       const cardTitle = document.getElementById("selected-day-title");
       cardTitle.textContent = `Selected Day: ${day} ${getMonthName(month)} ${year}`;
       card.style.display = "block";
+      // Set selectedDate in YYYY-MM-DD format
+      selectedDate = `${year}-${(month+1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
+      // Load the timetable for this day
+      loadTimetable(selectedDate);
     }
 
     function generateCalendar(year, month) {
@@ -148,7 +380,7 @@
       const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
       daysOfWeek.forEach(day => {
         const div = document.createElement("div");
-        div.className = "weekday";
+        div.className = "weekday bg-danger";
         div.textContent = day;
         calendar.appendChild(div);
       });
@@ -220,25 +452,22 @@
 
     generateCalendar(currentYear, currentMonth);
 
-    // Initialize Bootstrap modal
+    // ----------------------------
+    // Subject Modal Code
+    // ----------------------------
     const subjectModal = new bootstrap.Modal(document.getElementById('subjectModal'));
-    // Open modal when "Add Subject" button is clicked
     document.getElementById('add-subject-button').addEventListener('click', () => {
       subjectModal.show();
     });
 
-    // Handle form submission for adding a subject
     document.getElementById('subjectForm').addEventListener('submit', function(e) {
       e.preventDefault();
       const subjectName = document.getElementById('subjectName').value.trim();
       if (!subjectName) return;
 
-      // POST request to add the subject to the database
       fetch('/api/subjects', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: subjectName })
       })
       .then(response => {
@@ -249,14 +478,32 @@
       })
       .then(data => {
         console.log('Subject created:', data);
-        // Optionally: update your subjects list here
         document.getElementById('subjectForm').reset();
         subjectModal.hide();
       })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+      .catch(error => console.error('Error:', error));
     });
+
+    // Function to load timetable (declared here so it is accessible in showDayCard)
+    function loadTimetable(date) {
+      const timetable = document.getElementById("timetable");
+      timetable.innerHTML = "";
+      fetch(`/api/study_sessions?date=${date}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.length === 0) {
+            timetable.innerHTML = "<li class='list-group-item text-muted'>No sessions</li>";
+            return;
+          }
+          data.forEach((session) => {
+            const li = document.createElement("li");
+            li.classList.add("list-group-item");
+            li.innerHTML = `<strong>${session.start_time} - ${session.title}</strong><br>${session.description}`;
+            timetable.appendChild(li);
+          });
+        })
+        .catch((err) => console.error("Error loading sessions:", err));
+    }
   </script>
 </body>
 </html>

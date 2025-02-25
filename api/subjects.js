@@ -2,6 +2,18 @@ const express = require("express");
 const router = express.Router();
 const db = require("../db.js");
 
+// GET all subjects (for populating the dropdown)
+router.get("/", (req, res) => {
+    const query = "SELECT * FROM subjects ORDER BY name ASC";
+    db.query(query, (err, results) => {
+      if (err) {
+        console.error("Error fetching subjects:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+      res.json(results);
+    });
+});
+
 // POST /api/subjects
 router.post("/", (req, res) => {
   const { name } = req.body;
