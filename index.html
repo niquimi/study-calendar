@@ -1,9 +1,75 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monthly Calendar</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        .day, .weekday {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+        .weekday {
+            font-weight: bold;
+            background: #f4f4f4;
+        }
+        .empty {
+            border: none;
+            background: transparent;
+        }
+    </style>
 </head>
 <body>
-    <h1>Test</h1>
+    <h1>Monthly Calendar</h1>
+    <div id="calendar"></div>
+
+    <script>
+        function generateCalendar(year, month) {
+            const calendar = document.getElementById("calendar");
+            calendar.innerHTML = ""; // Clear previous calendar
+
+            const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+            daysOfWeek.forEach(day => {
+                const div = document.createElement("div");
+                div.className = "weekday";
+                div.textContent = day;
+                calendar.appendChild(div);
+            });
+
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            let startDay = firstDay.getDay(); // Get day of week (0 = Sunday)
+
+            startDay = startDay === 0 ? 6 : startDay - 1; // Adjust for Monday start
+
+            for (let i = 0; i < startDay; i++) {
+                const emptyCell = document.createElement("div");
+                emptyCell.className = "empty";
+                calendar.appendChild(emptyCell);
+            }
+
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const dayCell = document.createElement("div");
+                dayCell.className = "day";
+                dayCell.textContent = day;
+                calendar.appendChild(dayCell);
+            }
+        }
+
+        const today = new Date();
+        generateCalendar(today.getFullYear(), today.getMonth());
+    </script>
 </body>
 </html>
