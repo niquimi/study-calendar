@@ -18,6 +18,34 @@ router.get("/", (req, res) => {
   });
 });
 
+// GET all study sessions for a specific month
+router.get("/month", (req, res) => {
+    const { year, month } = req.query;
+    if (!year || !month) {
+      return res.status(400).json({ error: "Year and month are required" });
+    }
+  
+    const firstDay = `${year}-${month}-01`;
+    const lastDay = `${year}-${month}-31`;
+  
+    const query = `
+      SELECT 
+        id, subject_id, 
+        DATE_FORMAT(session_date, '%Y-%m-%d') AS session_date, 
+        start_time, duration, title, description 
+      FROM study_sessions 
+      WHERE session_date BETWEEN ? AND ?
+    `;
+
+    db.query(query, [firstDay, lastDay], (err, results) => {
+      if (err) {
+        console.error("Error fetching study sessions:", err);
+        return res.status(500).json({ error: "Database error" });
+      }
+      res.json(results);
+    });
+});  
+
 // DELETE a study session
 router.delete("/:id", async (req, res) => {
     const { id } = req.params;

@@ -195,6 +195,43 @@
     let selectedDate = null;
     const today = new Date();
 
+
+    function getPastelColor(subjectId) {
+        const hue = (subjectId * 137) % 360; // Spread colors evenly
+        return `hsl(${hue}, 70%, 85%)`; // HSL format for pastel tones
+    }
+
+    function generateGradientForDay(sessions) {
+        if (sessions.length === 0) return "transparent"; // No sessions, no gradient
+
+        let totalDuration = sessions.reduce((sum, session) => sum + session.duration, 0);
+        let gradientStops = [];
+        let accumulatedPercentage = 0;
+
+        sessions.forEach(session => {
+            let percentage = (session.duration / totalDuration) * 100;
+            let color = getPastelColor(session.subject_id); // Ensure this function exists
+            gradientStops.push(`${color} ${accumulatedPercentage}% ${accumulatedPercentage + percentage}%`);
+            accumulatedPercentage += percentage;
+        });
+        console.log("Gradient for sessions:", gradientStops.join(", "));
+
+        return `linear-gradient(to bottom, ${gradientStops.join(", ")})`;
+    }
+
+
+    async function fetchSessionsForMonth(year, month) {
+        try {
+            const response = await fetch(`/api/study_sessions/month?year=${year}&month=${month}`);
+            if (!response.ok) throw new Error("Failed to fetch sessions");
+            return await response.json();
+        } catch (error) {
+            console.error("Error fetching sessions:", error);
+            return [];
+        }
+    }
+
+
     function deleteSession(sessionId) {
             if (!confirm("Are you sure you want to delete this session?")) return;
 
@@ -362,7 +399,7 @@
       loadTimetable(selectedDate);
     }
 
-    function generateCalendar(year, month) {
+    async function generateCalendar(year, month) {
       const calendar = document.getElementById("calendar");
       const monthYear = document.getElementById("month-year");
       calendar.innerHTML = "";
@@ -398,25 +435,47 @@
       }
 
       // Active days for current month
-      for (let day = 1; day <= lastDay.getDate(); day++) {
-        const dayCell = document.createElement("div");
-        dayCell.className = "day current-month";
-        dayCell.textContent = day;
-
-        // If today, select by default (when viewing the current month)
-        if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
-          dayCell.classList.add("selected");
-          showDayCard(day, month, year);
-        }
-
-        // Add click event to select a day and show the card
-        dayCell.addEventListener("click", function() {
-          document.querySelectorAll(".current-month.selected").forEach(cell => cell.classList.remove("selected"));
-          this.classList.add("selected");
-          showDayCard(day, month, year);
+      const sessions = await fetchSessionsForMonth(year, month + 1);
+      const sessionsByDate = {};
+        // Organize sessions by date
+        sessions.forEach(session => {
+            if (!sessionsByDate[session.session_date]) {
+                sessionsByDate[session.session_date] = [];
+            }
+            sessionsByDate[session.session_date].push(session);
         });
-        calendar.appendChild(dayCell);
-      }
+        console.log(sessionsByDate);
+
+
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dayCell = document.createElement("div");
+            dayCell.className = "day current-month";
+            dayCell.textContent = day;
+
+            // Format date as YYYY-MM-DD for lookup
+            let dateKey = `${year}-${month + 1 < 10 ? "0" + (month+1) : month+1}-${day < 10 ? "0" + day: day}`;
+            
+
+            if (sessionsByDate[dateKey]) {
+                dayCell.style.background = generateGradientForDay(sessionsByDate[dateKey]);
+            }
+
+
+            // Mark today's date
+            if (year === today.getFullYear() && month === today.getMonth() && day === today.getDate()) {
+                dayCell.classList.add("selected");
+                showDayCard(day, month, year);
+            }
+
+            // Add click event to select a day and show the card
+            dayCell.addEventListener("click", function() {
+                document.querySelectorAll(".current-month.selected").forEach(cell => cell.classList.remove("selected"));
+                this.classList.add("selected");
+                showDayCard(day, month, year);
+            });
+
+            calendar.appendChild(dayCell);
+        }
 
       // Fill in next month's days to complete the week
       const totalCells = calendar.children.length;
@@ -500,10 +559,14 @@
 
                 li.innerHTML = `
                     <div>
+                        <strong>Subject:</strong> ${session.subject_id}
+                    </div>
+                    <div>
                         <strong>${session.start_time} - ${session.title}</strong><br>${session.description}
                     </div>
                     <button class="btn btn-danger btn-sm delete-session-btn" data-id="${session.id}">Delete</button>
                 `;
+                li.style.backgroundColor = getPastelColor(session.subject_id);
                 timetable.appendChild(li);
             });
 
