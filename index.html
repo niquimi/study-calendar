@@ -92,77 +92,90 @@
   
   <!-- Bootstrap Modal for Adding Study Session -->
   <div class="modal fade" id="sessionModal" tabindex="-1" aria-labelledby="sessionModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <form id="sessionForm">
-          <div class="modal-header">
-            <h5 class="modal-title" id="sessionModalLabel">Add Study Session</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="sessionForm">
+        <div class="modal-header">
+          <h5 class="modal-title" id="sessionModalLabel">Add Study Session</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <!-- Subject Selection -->
+          <div class="mb-3">
+            <label for="subjectSelect" class="form-label">Subject</label>
+            <select class="form-control" id="subjectSelect" required></select>
           </div>
-          <div class="modal-body">
-            <!-- Subject Selection -->
-            <div class="mb-3">
-              <label for="subjectSelect" class="form-label">Subject</label>
-              <select class="form-control" id="subjectSelect" required></select>
-            </div>
-            <!-- Date Input (Pre-filled with Selected Day) -->
-            <div class="mb-3">
-              <label for="sessionDate" class="form-label">Date</label>
-              <input type="date" class="form-control" id="sessionDate" required readonly>
-            </div>
-            <!-- Session Type Selection -->
-            <div class="mb-3">
-              <label class="form-label">Session Type</label>
-              <div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="sessionType" id="startSessionOption" value="start" checked>
-                  <label class="form-check-label" for="startSessionOption">Start Session</label>
-                </div>
-                <div class="form-check form-check-inline">
-                  <input class="form-check-input" type="radio" name="sessionType" id="registerSessionOption" value="register">
-                  <label class="form-check-label" for="registerSessionOption">Register Session</label>
-                </div>
+
+          <!-- Date Input -->
+          <div class="mb-3">
+            <label for="sessionDate" class="form-label">Date</label>
+            <input type="date" class="form-control" id="sessionDate" required readonly>
+          </div>
+
+          <!-- Session Type Selection -->
+          <div class="mb-3">
+            <label class="form-label">Session Type</label>
+            <div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="sessionType" id="registerSessionOption" value="register" checked>
+                <label class="form-check-label" for="registerSessionOption">Register Session</label>
               </div>
-            </div>
-            <!-- Start Session Fields -->
-            <div id="startSessionFields">
-              <div class="mb-3">
-                <label for="startTime" class="form-label">Start Time</label>
-                <input type="time" class="form-control" id="startTime" readonly>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="sessionType" id="startSessionOption" value="start">
+                <label class="form-check-label" for="startSessionOption">Start Session</label>
               </div>
-              <div class="mb-3">
-                <label for="sessionDuration" class="form-label">Duration (minutes)</label>
-                <input type="number" class="form-control" id="sessionDuration" min="1">
-              </div>
-            </div>
-            <!-- Register Session Fields -->
-            <div id="registerSessionFields" style="display: none;">
-              <div class="mb-3">
-                <label for="registerStartTime" class="form-label">Start Time</label>
-                <input type="time" class="form-control" id="registerStartTime">
-              </div>
-              <div class="mb-3">
-                <label for="endTime" class="form-label">Finish Time</label>
-                <input type="time" class="form-control" id="endTime">
-              </div>
-            </div>
-            <!-- Common Fields -->
-            <div class="mb-3">
-              <label for="sessionTitle" class="form-label">Title</label>
-              <input type="text" class="form-control" id="sessionTitle" required>
-            </div>
-            <div class="mb-3">
-              <label for="sessionDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="sessionDescription"></textarea>
             </div>
           </div>
-          <div class="modal-footer">
-            <button type="submit" class="btn btn-primary">Save Session</button>
+
+          <!-- Register Session Fields (Default Visible) -->
+          <div id="registerSessionFields">
+            <div class="mb-3">
+              <label for="registerStartTime" class="form-label">Start Time</label>
+              <input type="time" class="form-control" id="registerStartTime">
+            </div>
+            <div class="mb-3">
+              <label for="endTime" class="form-label">Finish Time</label>
+              <input type="time" class="form-control" id="endTime">
+            </div>
           </div>
-        </form>
-      </div>
+
+          <!-- Start Session Fields (Stopwatch/Countdown) -->
+          <div id="startSessionFields" style="display: none;">
+            <div class="mb-3">
+              <label for="startTime" class="form-label">Start Time</label>
+              <input type="time" class="form-control" id="startTime" readonly>
+            </div>
+            <div class="mb-3">
+              <label for="sessionDuration" class="form-label">Duration (minutes)</label>
+              <input type="number" class="form-control" id="sessionDuration" min="1">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Timer</label>
+              <div id="timerDisplay">00:00:00</div>
+              <button type="button" id="startTimer" class="btn btn-success">Start</button>
+              <button type="button" id="stopTimer" class="btn btn-danger" style="display:none;">Stop</button>
+              <button type="button" id="resetTimer" class="btn btn-secondary" style="display:none;">Reset</button>
+            </div>
+          </div>
+
+          <!-- Common Fields -->
+          <div class="mb-3">
+            <label for="sessionTitle" class="form-label">Title</label>
+            <input type="text" class="form-control" id="sessionTitle" required>
+          </div>
+          <div class="mb-3">
+            <label for="sessionDescription" class="form-label">Description</label>
+            <textarea class="form-control" id="sessionDescription"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="sessionSubmitbtn" type="submit" class="btn btn-primary">Save Session</button>
+        </div>
+      </form>
     </div>
   </div>
+</div>
+
   
   <!-- Bootstrap Modal for Adding Subject -->
   <div class="modal fade" id="subjectModal" tabindex="-1" aria-labelledby="subjectModalLabel" aria-hidden="true">
@@ -262,12 +275,20 @@
       const timetable = document.getElementById("timetable");
 
       // Toggle session type fields based on radio selection
-      const startSessionOption = document.getElementById("startSessionOption");
-      const registerSessionOption = document.getElementById("registerSessionOption");
-      const startSessionFields = document.getElementById("startSessionFields");
       const registerSessionFields = document.getElementById("registerSessionFields");
-      startSessionOption.addEventListener("change", toggleSessionType);
-      registerSessionOption.addEventListener("change", toggleSessionType);
+        const startSessionFields = document.getElementById("startSessionFields");
+        const registerSessionOption = document.getElementById("registerSessionOption");
+        const startSessionOption = document.getElementById("startSessionOption");
+        const sessionDurationInput = document.getElementById("sessionDuration");
+        const timerDisplay = document.getElementById("timerDisplay");
+        const startTimerBtn = document.getElementById("startTimer");
+        const stopTimerBtn = document.getElementById("stopTimer");
+        const resetTimerBtn = document.getElementById("resetTimer");
+        const submitSessionBtn = document.getElementById("sessionSubmitbtn");
+        startSessionOption.addEventListener("change", toggleSessionType);
+        registerSessionOption.addEventListener("change", toggleSessionType);
+
+        let timerInterval, elapsedSeconds = 0;
 
       function toggleSessionType() {
         if (startSessionOption.checked) {
@@ -281,6 +302,58 @@
           registerSessionFields.style.display = "";
         }
       }
+
+      function updateTimerDisplay() {
+            const hours = Math.floor(elapsedSeconds / 3600).toString().padStart(2, '0');
+            const minutes = Math.floor((elapsedSeconds % 3600) / 60).toString().padStart(2, '0');
+            const seconds = (elapsedSeconds % 60).toString().padStart(2, '0');
+            timerDisplay.textContent = `${hours}:${minutes}:${seconds}`;
+        }
+
+        startTimerBtn.addEventListener("click", function () {
+            submitSessionBtn.disabled = true;
+            if (sessionDurationInput.value) {
+            // Countdown Timer
+            elapsedSeconds = parseInt(sessionDurationInput.value) * 60;
+            updateTimerDisplay();
+            timerInterval = setInterval(() => {
+                if (elapsedSeconds > 0) {
+                elapsedSeconds--;
+                updateTimerDisplay();
+                } else {
+                clearInterval(timerInterval);
+                alert("Session finished!");
+                submitSessionBtn.disabled = false;
+                }
+            }, 1000);
+            } else {
+            // Stopwatch
+            elapsedSeconds = 0;
+            timerInterval = setInterval(() => {
+                elapsedSeconds++;
+                updateTimerDisplay();
+            }, 1000);
+            }
+
+            startTimerBtn.style.display = "none";
+            stopTimerBtn.style.display = "inline-block";
+            resetTimerBtn.style.display = "inline-block";
+        });
+
+        stopTimerBtn.addEventListener("click", function () {
+            clearInterval(timerInterval);
+            startTimerBtn.style.display = "inline-block";
+            stopTimerBtn.style.display = "none";
+        });
+
+        resetTimerBtn.addEventListener("click", function () {
+            clearInterval(timerInterval);
+            elapsedSeconds = 0;
+            updateTimerDisplay();
+            startTimerBtn.style.display = "inline-block";
+            stopTimerBtn.style.display = "none";
+            resetTimerBtn.style.display = "none";
+        });
 
       // Show the add session modal when clicking the button
       addSessionButton.addEventListener("click", function () {
